@@ -13,6 +13,7 @@ ce-calculator.workspace = true
 ce-compiler.workspace = true
 ce-core.workspace = true
 ce-interpreter.workspace = true
+ce-minimizer.workspace = true
 ce-parser.workspace = true
 ce-security.workspace = true
 ce-sign.workspace = true
