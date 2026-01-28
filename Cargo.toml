@@ -37,6 +37,7 @@ ce-compiler = { path = "./crates/envs/ce-compiler" }
 ce-core = { path = "./crates/ce-core" }
 ce-interpreter = { path = "./crates/envs/ce-interpreter" }
 ce-parser = { path = "./crates/envs/ce-parser" }
+ce-playground = { path = "./crates/envs/ce-playground" }
 ce-security = { path = "./crates/envs/ce-security" }
 ce-shell = { path = "./crates/ce-shell" }
 ce-sign = { path = "./crates/envs/ce-sign" }
@@ -56,9 +57,9 @@ itertools = "0.14.0"
 lalrpop = "0.22.1"
 lalrpop-util = { version = "0.22.1", features = ["lexer"] }
 lz4_flex = "0.11.2"
+mcltl = { path = "./crates/mcltl-rs" }
 md5 = "0.7.0"
 miette = { version = "7.5.0", features = ["fancy", "serde"] }
-mcltl = { path = "./crates/mcltl-rs" }
 once_cell = "1.19.0"
 petgraph = { version = "0.7.1" }
 rand = { version = "0.9.0", features = ["small_rng"] }

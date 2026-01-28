@@ -15,9 +15,10 @@ pub trait EnvExt: Env {
 
 define_shell!(
     ce_calculator::CalcEnv[Calculator, "Calculator"],
-    ce_parser::ParserEnv[Parser, "Parser"],
     ce_compiler::CompilerEnv[Compiler, "Compiler"],
     ce_interpreter::InterpreterEnv[Interpreter, "Interpreter"],
+    ce_parser::ParserEnv[Parser, "Parser"],
+    ce_playground::PlaygroundEnv[Playground, "Playground"],
     ce_security::SecurityEnv[Security, "Security"],
     ce_sign::SignEnv[Sign, "Sign Analysis"],
 );
