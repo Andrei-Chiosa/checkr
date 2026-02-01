@@ -29,7 +29,7 @@ impl Env for MinimizerEnv {
     type Meta = ();
 
     fn run(input: &Self::Input) -> ce_core::Result<Self::Output> {
-        let dfa = dfa::parse_dfa(input.raw_input.clone());
+        let dfa = dfa::parse_dfa(input.raw_input.as_str());
         
         Ok( Output { test_output: format!("{:?}", dfa)})
     }
