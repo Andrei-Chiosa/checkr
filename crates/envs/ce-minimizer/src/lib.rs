@@ -30,11 +30,19 @@ impl Env for MinimizerEnv {
     type Meta = ();
 
     fn run(input: &Self::Input) -> ce_core::Result<Self::Output> {
-        let dfa = dfa::parse_dfa(input.raw_input.as_str())?;
         
-        let dot = dfa_to_dot(&dfa)?;
+        let result = (|| {
+            let dfa = dfa::parse_dfa(input.raw_input.as_str())?;
+            let dot = dfa_to_dot(&dfa)?;
+            Ok::<String, ce_core::EnvError>(dot)
+        })();
 
-        Ok( Output { test_output: dot}) 
+        let test_output = match result {
+            Ok(dot) => dot,
+            Err(e) => format!("// error\n// {e}\n"),
+        };
+
+        Ok(Output { test_output })
     }
 
     fn validate(_input: &Self::Input, _output: &Self::Output) -> ce_core::Result<ValidationResult> {

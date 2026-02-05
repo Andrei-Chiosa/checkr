@@ -40,7 +40,7 @@ pub fn parse_dfa(input: &str) -> Result<RawDfa,EnvError> {
     };
     let mut current_section = Section::Null;
 
-    for (line_no, raw_line) in input.lines().enumerate() {
+    for (_, raw_line) in input.lines().enumerate() {
         let line = raw_line.trim();
         if line.is_empty() {
             continue;
