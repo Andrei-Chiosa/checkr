@@ -223,7 +223,8 @@ export namespace ce_minimizer {
     dfa: string
   };
   export type Output = {
-    dfa: string
+    dfa: string,
+    dot: string
   };
 }
 export namespace ce_shell {
