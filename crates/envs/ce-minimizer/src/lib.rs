@@ -1,14 +1,13 @@
-mod dfa;
-mod minimizer;
-mod dfa_gen;
+pub mod dfa;
+pub mod minimizer;
+pub mod dfa_gen;
+
+pub use dfa::*;
+pub use dfa_gen::*;
+pub use minimizer::*;
 
 use ce_core::{Env, Generate, ValidationResult, define_env, rand, EnvError};
 use serde::{Deserialize, Serialize};
-use crate::rand::{seq::IndexedRandom};
-
-use dfa::*;
-use minimizer::*;
-use dfa_gen::*;
 use std::collections::{HashSet, VecDeque};
 
 define_env!(MinimizerEnv);
