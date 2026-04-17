@@ -338,6 +338,7 @@ impl NamedDFA {
         
         Ok(NamedDFA::default())
     }
+
 }
 
 impl DFA {
