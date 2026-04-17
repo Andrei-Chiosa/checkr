@@ -1,5 +1,6 @@
 use std::{collections::HashMap, collections::HashSet, usize};
 
+use ce_core::EnvError;
 use itertools::enumerate;
 
 pub type Node = usize;
@@ -331,6 +332,11 @@ impl NamedDFA {
 
         s.push_str("}");
         s
+    }
+
+    pub fn from_dot(dot: String) -> Result<Self, EnvError>  {
+        
+        Ok(NamedDFA::default())
     }
 }
 
