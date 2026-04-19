@@ -1,38 +1,44 @@
 use tapi::kind::Name;
 
-use super::{NamedDFA, Node, Edge, DFA};
-use std::collections::{HashSet, VecDeque, HashMap};
+use super::{DFA, Edge, NamedDFA, Node};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 #[derive(PartialEq)]
-enum Equivalence { Equivalent, Distinguishable }
+enum Equivalence {
+    Equivalent,
+    Distinguishable,
+}
 
 type EquivTable = Vec<Vec<bool>>;
 
-#[derive(Debug, Clone, PartialEq, tapi::Tapi, serde::Serialize, serde::Deserialize, thiserror::Error)]
+#[derive(
+    Debug, Clone, PartialEq, tapi::Tapi, serde::Serialize, serde::Deserialize, thiserror::Error,
+)]
 pub enum MinimizationError {
     #[error("transition not found")]
     IncompleteInput,
 }
 
 impl NamedDFA {
-    
-    pub fn minimize(&mut self) -> Result<NamedDFA, MinimizationError>{
-        // Remove unreachable states first 
+    pub fn minimize(&mut self) -> Result<NamedDFA, MinimizationError> {
+        // Remove unreachable states first
         self.remove_unreachable_states();
-        
+
         let table = self.build_equivalence_table()?;
-        
+
         //partition the states into blocks of mutually equivalent states
         let n = self.dfa.state_count;
         let mut class = vec![usize::MAX; n]; //class[state] get the equivalence class
         let mut num_classes = 0;
 
         for p in 0..n {
-            if class[p] != usize::MAX { continue; }
+            if class[p] != usize::MAX {
+                continue;
+            }
 
             class[p] = num_classes;
-            for q in (p+1)..n {
-                if self.equivalent(p,q, &table) == Equivalence::Equivalent {
+            for q in (p + 1)..n {
+                if self.equivalent(p, q, &table) == Equivalence::Equivalent {
                     class[q] = num_classes;
                 }
             }
@@ -55,8 +61,8 @@ impl NamedDFA {
             for edge in &self.dfa.edges {
                 if edge.from == rep {
                     new_edges.push(Edge {
-                        from: c, 
-                        symbol: edge.symbol, 
+                        from: c,
+                        symbol: edge.symbol,
                         to: class[edge.to],
                     });
                 }
@@ -79,26 +85,25 @@ impl NamedDFA {
             })
             .collect();
 
-        Ok(
-            NamedDFA {
-                dfa: DFA {
-                    state_count: num_classes,
-                    edges: new_edges,
-                    initial: new_initial,
-                    accepting: new_accepting,
-                    alphabet: self.dfa.alphabet.clone(),
-                },
-                names: new_names,
+        Ok(NamedDFA {
+            dfa: DFA {
+                state_count: num_classes,
+                edges: new_edges,
+                initial: new_initial,
+                accepting: new_accepting,
+                alphabet: self.dfa.alphabet.clone(),
+            },
+            names: new_names,
         })
     }
-    
+
     fn remove_unreachable_states(&mut self) {
         //Perform a BFS
         let mut visited: HashSet<Node> = HashSet::new();
         let mut queue: VecDeque<Node> = VecDeque::new();
 
         queue.push_back(self.dfa.initial);
-        
+
         while let Some(current) = queue.pop_front() {
             if visited.contains(&current) {
                 continue;
@@ -110,7 +115,7 @@ impl NamedDFA {
                     queue.push_back(edge.to);
                 }
             }
-        }   
+        }
 
         self.dfa.edges.retain(|e| visited.contains(&e.from));
 
@@ -165,10 +170,18 @@ impl NamedDFA {
             changed = false;
             for p in 0..n {
                 for q in 0..n {
-                    if table[p][q] { continue; }
+                    if table[p][q] {
+                        continue;
+                    }
                     for symbol in &self.dfa.alphabet {
-                        let dp = self.dfa.delta(p, *symbol).ok_or(MinimizationError::IncompleteInput)?;
-                        let dq = self.dfa.delta(q, *symbol).ok_or(MinimizationError::IncompleteInput)?;
+                        let dp = self
+                            .dfa
+                            .delta(p, *symbol)
+                            .ok_or(MinimizationError::IncompleteInput)?;
+                        let dq = self
+                            .dfa
+                            .delta(q, *symbol)
+                            .ok_or(MinimizationError::IncompleteInput)?;
                         if table[dp][dq] {
                             table[p][q] = true;
                             table[q][p] = true;
@@ -183,15 +196,14 @@ impl NamedDFA {
         Ok(table)
     }
 
-    fn equivalent(&self, q0:Node, q1:Node, table: &EquivTable) -> Equivalence {
+    fn equivalent(&self, q0: Node, q1: Node, table: &EquivTable) -> Equivalence {
         if q0 >= self.dfa.state_count || q1 >= self.dfa.state_count {
-            panic!("States not present in DFA"); 
+            panic!("States not present in DFA");
         }
         if table[q0][q1] {
             Equivalence::Distinguishable
         } else {
             Equivalence::Equivalent
         }
-        
-    }  
+    }
 }
