@@ -279,12 +279,12 @@ export namespace ce_shell {
       json: any,
       hash: ce_shell.io.Hash
     };
-    export type Hash = {
-      bytes: number[]
-    };
     export type Meta = {
       analysis: ce_shell.Analysis,
       json: any
+    };
+    export type Hash = {
+      bytes: number[]
     };
     export type Output = {
       analysis: ce_shell.Analysis,
@@ -379,15 +379,6 @@ export namespace inspectify {
     }
   }
   export namespace endpoints {
-    export type PublicEvent =
-      | { "type": "Reset" }
-      | { "type": "StateChanged", "value": inspectify.checko.scoreboard.PublicState };
-    export type ReferenceExecution = {
-      meta: ce_shell.io.Meta,
-      output: (ce_shell.io.Output | null),
-      annotation: (ce_shell.io.Annotation | null),
-      error: (string | null)
-    };
     export type Event =
       | { "type": "Reset" }
       | { "type": "CompilationStatus", "value": { status: inspectify.endpoints.CompilationStatus } }
@@ -395,12 +386,18 @@ export namespace inspectify {
       | { "type": "JobsChanged", "value": { jobs: driver.job.JobId[] } }
       | { "type": "GroupsConfig", "value": { config: inspectify.checko.config.GroupsConfig } }
       | { "type": "ProgramsConfig", "value": { programs: inspectify.endpoints.Program[] } };
+    export type ReferenceExecution = {
+      meta: ce_shell.io.Meta,
+      output: (ce_shell.io.Output | null),
+      annotation: (ce_shell.io.Annotation | null),
+      error: (string | null)
+    };
+    export type PublicEvent =
+      | { "type": "Reset" }
+      | { "type": "StateChanged", "value": inspectify.checko.scoreboard.PublicState };
     export type GenerateParams = {
       analysis: ce_shell.Analysis,
       seed: (number | null)
-    };
-    export type AnalysisExecution = {
-      id: driver.job.JobId
     };
     export type CompilationStatus = {
       id: (driver.job.JobId | null),
@@ -415,6 +412,9 @@ export namespace inspectify {
       stdout: string,
       spans: inspectify.endpoints.Span[],
       analysis_data: (inspectify.endpoints.AnalysisData | null)
+    };
+    export type AnalysisExecution = {
+      id: driver.job.JobId
     };
     export type Program = {
       hash: ce_shell.io.Hash,

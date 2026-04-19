@@ -11,8 +11,18 @@
   let svg = $state('');
 
   function enrichDot(dotStr: string): string {
-    let enriched = dotStr;
+    // Hide label
+    const labelMap: Record<string, string> = {};
+    let counter = 0;
+    let enriched = dotStr.replace(/label="[^"]*"/g, (match) => {
+      const key = `__LABEL_${counter++}__`;
+      labelMap[key] = match;
+      return key;
+    });
     let initialNode: string | null = null;
+    
+    //let enriched = dotStr;
+    //let initialNode: string | null = null;
 
     // First pass: handle nodes that are both accepting and initial
     enriched = enriched.replace(
@@ -23,7 +33,7 @@
           .replace(/isAccepting=true/g, '')
           .replace(/isInitial=true/g, '')
           .trim();
-        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').trim();
+        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
 
         if (cleanAttrs) {
           return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
@@ -42,7 +52,7 @@
           .replace(/isAccepting=true/g, '')
           .replace(/isInitial=true/g, '')
           .trim();
-        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').trim();
+        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
 
         if (cleanAttrs) {
           return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
@@ -55,7 +65,7 @@
     // Extract and convert accepting states to double circles
     enriched = enriched.replace(/(\w+)\s*\[(.*?isAccepting=true.*?)\];/g, (match, node, attrs) => {
       let cleanAttrs = attrs.replace(/isAccepting=true/g, '').trim();
-      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').trim();
+      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
 
       if (cleanAttrs) {
         return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
@@ -68,7 +78,7 @@
     enriched = enriched.replace(/(\w+)\s*\[(.*?isInitial=true.*?)\];/g, (match, node, attrs) => {
       initialNode = node;
       let cleanAttrs = attrs.replace(/isInitial=true/g, '').trim();
-      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').trim();
+      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
 
       if (cleanAttrs) {
         return `${node} [${cleanAttrs}, shape=circle];`;
@@ -111,6 +121,12 @@
       );
     }
 
+    for (const [key, value] of Object.entries(labelMap)) {
+      enriched = enriched.replace(key, value);
+    }
+
+    enriched = enriched.replace(/,\s*,/g, ',');
+
     return enriched;
   }
 
@@ -121,14 +137,29 @@
     });
   });
 
-  // Only re-render when dot changes
+  // Re-render whenever dot or graphviz changes
   $effect(() => {
-    const currentDot = dot;
-    if (graphviz && currentDot) {
-      svg = graphviz.dot(enrichDot(currentDot));
-    } else {
+    console.log('raw dot:', dot);
+    if (!graphviz || !dot) {
+      svg = '';
+      return;
+    }
+    try {
+      svg = graphviz.dot(enrichDot(dot));
+    } catch (e) {
+      console.error('Graphviz render error:', e);
       svg = '';
     }
+
+    try {
+      const enriched = enrichDot(dot);
+      console.log('enriched dot:', enriched);  // <-- here
+      svg = graphviz.dot(enriched);
+    } catch (e) {
+      console.error('Graphviz render error:', e);
+      svg = '';
+    }
+
   });
 </script>
 

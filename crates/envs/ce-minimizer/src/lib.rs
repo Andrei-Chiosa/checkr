@@ -57,19 +57,35 @@ impl Env for MinimizerEnv {
         Ok( Output { dot, minimized_dot, deterministic})        
     }
 
-    fn validate(input: &Self::Input, output: &Self::Output) -> Result<(ValidationResult, ()), EnvError> {
-        //input is for reference implementation and output is for the student
-        
+    fn validate(input: &Self::Input, output: &Self::Output) -> Result<(ValidationResult, ()), EnvError> {        
         // run the reference implementation
-        let expected = NamedDFA::build(
+        let mut expected = NamedDFA::build(
                 parse_dfa(&input.dfa).map_err(ce_core::EnvError::invalid_input_for_program("failed to parse DFA"))?
-            ).map_err(ce_core::EnvError::invalid_input_for_program("failed to parse DFA"))?
-            .minimize().map_err(ce_core::EnvError::invalid_input_for_program("failed to minimize dfa"))?
-            .to_dot();
-        
-        let produced = &output.minimized_dot;
+            ).map_err(ce_core::EnvError::invalid_input_for_program("failed to parse DFA"))?;
 
-        Ok((ValidationResult::Correct, ()))
+        let deterministic = expected.dfa.check_determinism(); 
+
+        if deterministic {
+            let expected = expected.minimize()
+                .map_err(ce_core::EnvError::invalid_input_for_program("failed to minimize dfa"))?;
+            
+            //println!("expected state_count: {}", expected.dfa.state_count);
+            
+            let produced = DFA::from_dot(&output.minimized_dot)
+                .map_err(ce_core::EnvError::invalid_input_for_program("invalid dot output"))?;
+            
+            if produced.dfa_isomorphic_to(&expected.dfa) {
+                Ok((ValidationResult::Correct,()))
+            } else {
+                Ok((ValidationResult::Mismatch { reason: "produced automaton is different from expected".into() }, ()))
+            }
+        } else if deterministic == output.deterministic {
+            Ok((ValidationResult::Correct,()))
+        } else if deterministic {
+            Ok((ValidationResult::Mismatch { reason: "DFA expected".into() }, ()))
+        } else {
+            Ok((ValidationResult::Mismatch { reason: "NFA expected".into() }, ()))
+        }
     }
 }
 
@@ -82,59 +98,4 @@ impl Generate for Input {
 
         Self { dfa: generate_random_dfa(rng, state_count, allow_nondeterminism) }
     }
-}
-
-pub fn normalize(dfa: &DFA) -> DFA {
-    let mut mapping: Vec<Option<usize>> = vec![None; dfa.state_count];
-    let mut queue = std::collections::VecDeque::new();
-    let mut counter = 0;
-
-    mapping[dfa.initial] = Some(counter);
-    counter += 1;
-    queue.push_back(dfa.initial);
-
-    while let Some(state) = queue.pop_front() {
-        let mut edges: Vec<&Edge> = dfa.edges.iter()
-            .filter(|e| e.from == state)
-            .collect();
-        edges.sort_by_key(|e| e.symbol);
-
-        for edge in edges {
-            if mapping[edge.to].is_none() {
-                mapping[edge.to] = Some(counter);
-                counter += 1;
-                queue.push_back(edge.to);
-            }
-        }
-    }
-
-    let mut new_edges: Vec<Edge> = dfa.edges.iter()
-        .filter(|e| mapping[e.from].is_some() && mapping[e.to].is_some())
-        .map(|e| Edge {
-            from: mapping[e.from].unwrap(),
-            symbol: e.symbol,
-            to: mapping[e.to].unwrap(),
-        })
-        .collect();
-    new_edges.sort_by_key(|e| (e.from, e.symbol));
-
-    let mut new_accepting: Vec<Node> = dfa.accepting.iter()
-        .filter_map(|&s| mapping[s])
-        .collect();
-    new_accepting.sort();
-
-    let mut new_alphabet = dfa.alphabet.clone();
-    new_alphabet.sort();
-
-    DFA {
-        state_count: counter,
-        edges: new_edges,
-        initial: 0,
-        accepting: new_accepting,
-        alphabet: new_alphabet,
-    }
-}
-
-pub fn is_isomorphic(a: &DFA, b: &DFA) -> bool {
-    normalize(a) == normalize(b)
 }

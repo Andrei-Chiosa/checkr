@@ -1,4 +1,7 @@
-use std::{collections::HashMap, collections::HashSet, usize};
+use std::usize;
+use std::collections::{HashSet, HashMap,BTreeMap, BTreeSet};
+use petgraph::Graph;
+use petgraph::algo::is_isomorphic_matching;
 
 use ce_core::EnvError;
 use itertools::enumerate;
@@ -20,6 +23,13 @@ pub struct Edge {
     pub symbol: char,
     pub to: Node,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NodeAttr {
+    pub start: bool,
+    pub accept: bool,
+}
+
 #[derive(Default, Debug, PartialEq)]
 pub struct NamedDFA {
     pub dfa: DFA,
@@ -54,6 +64,12 @@ pub enum ParseErrorDFA {
 
     #[error("bad input")]
     BadInput,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq)]
+pub enum Error {
+    #[error("{message}")]
+    InvalidInput { message: String }
 }
 
 pub fn parse_dfa(input: &str) -> Result<RawDFA,ParseErrorDFA> {
@@ -292,7 +308,7 @@ impl NamedDFA {
         })
     } 
 
-    pub fn to_dot(&self) -> String {
+    pub fn to_dot_deprecated(&self) -> String {
         let mut s = "digraph DFA {\n  rankdir=LR\n\n".to_string();
 
         s.push_str("  // States\n");
@@ -334,11 +350,41 @@ impl NamedDFA {
         s
     }
 
-    pub fn from_dot(dot: String) -> Result<Self, EnvError>  {
-        
-        Ok(NamedDFA::default())
-    }
+    pub fn to_dot(&self) -> String {
+        let mut s = "digraph DFA {\n  rankdir=LR\n\n".to_string();
 
+        for (node, state) in enumerate(&self.names) {
+            s.push_str(&format!("  {} [label=\"{}\"",
+                node, 
+                state
+            ));
+            if self.dfa.initial == node {s.push_str(", isInitial=true")};
+            if self.dfa.accepting.contains(&node) {s.push_str(", isAccepting=true")};
+            s.push_str("];\n");
+        }
+        s.push_str("\n");
+
+        // multiple symbols on one edge        
+        let mut edge_map: HashMap<(Node, Node), Vec<char>> = HashMap::new();
+        for edge in &self.dfa.edges {
+            edge_map.entry((edge.from, edge.to)).or_default().push(edge.symbol);
+        }
+
+        for ((from, to), symbols) in edge_map {
+            s.push_str(&format!("  {} -> {} [label=\"{}\"]\n", 
+                from, 
+                to, 
+                {
+                    let mut chars: Vec<String> = symbols.iter().map(|c| c.to_string()).collect();
+                    chars.sort();
+                    chars.join(",")
+                }
+            ));
+        }
+
+        s.push_str("}");
+        s
+    }
 }
 
 impl DFA {
@@ -374,6 +420,86 @@ impl DFA {
 
     pub fn is_accepting(&self, node:Node) -> bool {
         self.accepting.contains(&node)
+    }
+
+    pub fn from_dot(dot: &String) -> Result<Self, Error>  {
+        let mut state_count = 0usize;
+        let mut edges: Vec<Edge> = Vec::new();
+        let mut initial: Node = 0;
+        let mut accepting: Vec<Node> = Vec::new();
+        let mut alphabet: std::collections::BTreeSet<char> = std::collections::BTreeSet::new();
+
+        for line in dot.lines() {
+            let line = line.trim();
+
+            if line.contains("->") {
+                // edge: `0 -> 1 [label="a,b"]
+                let parts: Vec<&str> = line.split("->").collect();
+                let from: Node = parts[0].trim().parse()
+                    .map_err(|_| Error::InvalidInput { message: "invalid transition".to_string() })?;
+                let to: Node = parts[1].split('[').next()
+                    .ok_or(Error::InvalidInput { message: "invalid transition".to_string() })?
+                    .trim().parse()
+                    .map_err(|_| Error::InvalidInput { message: "invalid transition".to_string() })?;
+                let symbols = line.split('"').nth(1)
+                    .ok_or(Error::InvalidInput { message: "invalid transition".to_string() })?;
+                for sym in symbols.split(',') {
+                    let c = sym.trim().chars().next()
+                    .ok_or(Error::InvalidInput { message: "invalid transition".to_string() })?;
+                    alphabet.insert(c);
+                    edges.push(Edge { from, to, symbol: c });
+                }
+            } else if line.contains('[') {
+                let node: Node = line.split('[').next()
+                    .ok_or(Error::InvalidInput { message: "invalid node".to_string() })?
+                    .trim().parse()
+                    .map_err(|_| Error::InvalidInput { message: "invalid node".to_string() })?;
+                
+                //println!("parsed node: {}", node);
+                state_count = state_count.max(node + 1);
+                if line.contains("isInitial=true") { initial = node; }
+                if line.contains("isAccepting=true") { accepting.push(node); }
+            }
+
+        }
+
+        Ok(DFA { state_count, edges, initial, accepting, alphabet: alphabet.into_iter().collect() })
+    }
+
+    pub fn to_graph(&self) -> Graph<NodeAttr, BTreeSet<String>> {
+        let mut g = Graph::new();
+        let mut nodes = Vec::new();
+
+        for i in 0..self.state_count {
+            nodes.push(g.add_node(NodeAttr {
+                start: i == self.initial,
+                accept: self.accepting.contains(&i),
+            }));
+        }
+
+        let mut edge_labels: BTreeMap<(usize, usize), BTreeSet<String>> = BTreeMap::new();
+        for edge in &self.edges {
+            edge_labels
+                .entry((edge.from, edge.to))
+                .or_default()
+                .insert(edge.symbol.to_string());
+        }
+
+        for ((from, to), labels) in edge_labels {
+            g.add_edge(nodes[from], nodes[to], labels);
+        }
+
+        g
+    }
+
+    pub fn dfa_isomorphic_to(&self, b: &DFA) -> bool {
+        if self.state_count != b.state_count {
+            return false;
+        }
+        let ga = self.to_graph();
+        let gb = b.to_graph();
+
+        is_isomorphic_matching(&ga, &gb, |na, nb| na == nb, |ea, eb| ea == eb)
     }
 }
 

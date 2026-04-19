@@ -396,6 +396,7 @@ version = "0.3.0"
 dependencies = [
  "ce-core",
  "itertools 0.14.0",
+ "petgraph",
  "serde",
  "serde_json",
  "tapi",
