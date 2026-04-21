@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Graphviz } from '@hpcc-js/wasm-graphviz';
+  import { parseNodesAndEdges } from '$lib/utils/dotHandler';
   import { mirage } from 'ayu';
 
   interface Props {
@@ -11,155 +12,62 @@
   let svg = $state('');
 
   function enrichDot(dotStr: string): string {
-    // Hide label
-    const labelMap: Record<string, string> = {};
-    let counter = 0;
-    let enriched = dotStr.replace(/label="[^"]*"/g, (match) => {
-      const key = `__LABEL_${counter++}__`;
-      labelMap[key] = match;
-      return key;
-    });
-    let initialNode: string | null = null;
-    
-    //let enriched = dotStr;
-    //let initialNode: string | null = null;
+    try {
+      const { nodes, edges } = parseNodesAndEdges(dotStr);
+      let initialNode: string | null = null;
 
-    // First pass: handle nodes that are both accepting and initial
-    enriched = enriched.replace(
-      /(\w+)\s*\[(.*?isAccepting=true.*?isInitial=true.*?)\];/g,
-      (match, node, attrs) => {
-        initialNode = node;
-        let cleanAttrs = attrs
-          .replace(/isAccepting=true/g, '')
-          .replace(/isInitial=true/g, '')
-          .trim();
-        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
-
-        if (cleanAttrs) {
-          return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
-        } else {
-          return `${node} [shape=doublecircle, class="accepting"];`;
+      for (const node of nodes) {
+        if (node.isInitial) {
+          initialNode = node.id;
+          break;
         }
-      },
-    );
+      }
 
-    // Handle nodes that are both accepting and initial (alternate order)
-    enriched = enriched.replace(
-      /(\w+)\s*\[(.*?isInitial=true.*?isAccepting=true.*?)\];/g,
-      (match, node, attrs) => {
-        initialNode = node;
-        let cleanAttrs = attrs
-          .replace(/isAccepting=true/g, '')
-          .replace(/isInitial=true/g, '')
-          .trim();
-        cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
+      let enriched = 'digraph DFA {\n  rankdir=LR\n';
+      if (initialNode) {
+        enriched += `  __start [label="", shape=none]\n  __start -> "${initialNode}"\n`;
+      }
 
-        if (cleanAttrs) {
-          return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
+      for (const node of nodes) {
+        const attrs: string[] = [];
+
+        if (node.isAccepting) {
+          attrs.push('shape=doublecircle');
+          attrs.push('class="accepting"');
         } else {
-          return `${node} [shape=doublecircle, class="accepting"];`;
+          attrs.push('shape=circle');
         }
-      },
-    );
+        if (node.additionalAttrs) {
+          attrs.push(node.additionalAttrs);
+        }
 
-    // Extract and convert accepting states to double circles
-    enriched = enriched.replace(/(\w+)\s*\[(.*?isAccepting=true.*?)\];/g, (match, node, attrs) => {
-      let cleanAttrs = attrs.replace(/isAccepting=true/g, '').trim();
-      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
-
-      if (cleanAttrs) {
-        return `${node} [${cleanAttrs}, shape=doublecircle, class="accepting"];`;
-      } else {
-        return `${node} [shape=doublecircle, class="accepting"];`;
+        enriched += `  "${node.id}" [${attrs.join(', ')}];\n`;
       }
-    });
-
-    // Extract initial node and add __start node with arrow
-    enriched = enriched.replace(/(\w+)\s*\[(.*?isInitial=true.*?)\];/g, (match, node, attrs) => {
-      initialNode = node;
-      let cleanAttrs = attrs.replace(/isInitial=true/g, '').trim();
-      cleanAttrs = cleanAttrs.replace(/^,\s*/, '').replace(/\s*,$/, '').replace(/,\s*,/g, ',').trim();
-
-      if (cleanAttrs) {
-        return `${node} [${cleanAttrs}, shape=circle];`;
-      } else {
-        return `${node} [shape=circle];`;
+      enriched += '\n';
+      for (const edge of edges) {
+        enriched += `  "${edge.from}" -> "${edge.to}" [label="${edge.label}"];\n`;
       }
-    });
-
-    // Handle nodes with attributes - replace any shape with circle, or add circle if missing
-    enriched = enriched.replace(/(\w+)\s*\[([^\]]*)\];/g, (match, node, attrs) => {
-      if (node === '__start') return match;
-      // If shape=doublecircle is already there, don't change it
-      if (attrs.includes('shape=doublecircle')) return match;
-      // If class=accepting, preserve it (for accepting nodes)
-      if (attrs.includes('class=accepting')) return match;
-      // If it has a different shape, replace it with circle
-      if (attrs.includes('shape=')) {
-        const cleanedAttrs = attrs.replace(/shape=\w+/g, 'shape=circle');
-        return `${node} [${cleanedAttrs}];`;
-      }
-      // If no shape, add circle
-      if (attrs.trim()) {
-        return `${node} [${attrs}, shape=circle];`;
-      } else {
-        return `${node} [shape=circle];`;
-      }
-    });
-
-    // Handle nodes without attributes - add them with shape=circle
-    enriched = enriched.replace(/\n\s+(\w+)\s*;/g, (match, node) => {
-      if (node === '__start') return match;
-      return `\n  ${node} [shape=circle];`;
-    });
-
-    // Add __start node and arrow if we found an initial state
-    if (initialNode) {
-      enriched = enriched.replace(
-        /(digraph[^{]*{)/,
-        `$1\n  rankdir=LR\n  __start [label="", shape=none]\n  __start -> ${initialNode}`,
-      );
+      enriched += '}\n';
+      return enriched;
+    } catch (error) {
+      console.error('Failed to parse DOT with dotparser:', error);
+      return dotStr;
     }
-
-    for (const [key, value] of Object.entries(labelMap)) {
-      enriched = enriched.replace(key, value);
-    }
-
-    enriched = enriched.replace(/,\s*,/g, ',');
-
-    return enriched;
   }
 
-  // Load graphviz once
   $effect(() => {
     Graphviz.load().then((g) => {
       graphviz = g;
     });
   });
 
-  // Re-render whenever dot or graphviz changes
   $effect(() => {
-    console.log('raw dot:', dot);
-    if (!graphviz || !dot) {
-      svg = '';
-      return;
-    }
-    try {
-      svg = graphviz.dot(enrichDot(dot));
-    } catch (e) {
-      console.error('Graphviz render error:', e);
+    const currentDot = dot;
+    if (graphviz && currentDot) {
+      svg = graphviz.dot(enrichDot(currentDot));
+    } else {
       svg = '';
     }
-
-    try {
-      const enriched = enrichDot(dot);
-      console.log('enriched dot:', enriched);  // <-- here
-      svg = graphviz.dot(enriched);
-    } catch (e) {
-      console.error('Graphviz render error:', e);
-      svg = '';
-    }
-
   });
 </script>
 
@@ -174,20 +82,20 @@
     background: transparent;
   }
 
-  /* Arrow heads - pink/magenta */
+  /* Arrow heads */
   div :global(polygon[fill='black']) {
     fill: #dfbfff;
     stroke: none;
   }
 
-  /* Node circles - filled gray, no stroke by default */
+  /* Node circles */
   div :global(ellipse) {
     stroke: none !important;
     stroke-width: 0 !important;
     fill: #6b7a8f !important;
   }
 
-  /* Accepting nodes (double circles) - all ellipses in group get green stroke with glow */
+  /* Accepting nodes */
   div :global(g[class*='accepting'] ellipse) {
     stroke: #85cc95 !important;
     stroke-width: 1.5 !important;
@@ -195,12 +103,12 @@
     filter: drop-shadow(0 0 4px #85cc95);
   }
 
-  /* Second ellipse (inner circle) - make it transparent */
+  /* Second ellipse for accepting states */
   div :global(g[class*='accepting'] ellipse + ellipse) {
     fill: transparent !important;
   }
 
-  /* Edges - pink/magenta */
+  /* Edges */
   div :global(path[stroke]) {
     stroke: #dfbfff !important;
     stroke-width: 1.5 !important;
@@ -212,7 +120,7 @@
     font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   }
 
-  /* Remove default white fills */
+  /* Background */
   div :global(polygon[fill='white']),
   div :global(circle[fill='white']) {
     fill: transparent !important;
