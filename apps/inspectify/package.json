@@ -45,6 +45,7 @@
   "dependencies": {
     "@iconify-json/heroicons": "^1.1.19",
     "ayu": "^8.0.1",
+    "dotparser": "^1.1.1",
     "file-saver": "^2.0.5",
     "immer": "^10.0.3",
     "monaco-editor": "^0.45.0",
