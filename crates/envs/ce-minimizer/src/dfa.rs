@@ -673,17 +673,36 @@ mod tests {
         assert_eq!(result.dfa.initial, 0);
         assert_eq!(result.dfa.accepting, vec![1]);
         assert_eq!(result.names, vec!["q0", "q1"]);
-        assert_eq!(result.dfa.edges, vec![
-            Edge { from: 0, symbol: '0', to: 1 }, 
-            Edge { from: 0, symbol: '1', to: 0 }, 
-            Edge { from: 1, symbol: '1', to: 0 }, 
-            Edge { from: 1, symbol: '0', to: 1 }, 
-        ]);
+        assert_eq!(
+            result.dfa.edges,
+            vec![
+                Edge {
+                    from: 0,
+                    symbol: '0',
+                    to: 1
+                },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 1,
+                    symbol: '0',
+                    to: 1
+                },
+            ]
+        );
         assert!(determinisic)
     }
 
     #[test]
-    fn valid_dfa_parses_correctly2() { 
+    fn valid_dfa_parses_correctly2() {
         let raw = parse_dfa(DFA2).unwrap();
         let result = NamedDFA::build(raw).unwrap();
         let determinisic = result.dfa.check_determinism();
@@ -692,29 +711,96 @@ mod tests {
         assert_eq!(result.dfa.initial, 0);
         assert_eq!(result.dfa.accepting, vec![3]);
         assert_eq!(result.names, vec!["A", "B", "F", "C", "G", "D", "E", "H"]);
-        assert_eq!(result.dfa.edges, vec![
-            Edge { from: 0, symbol: '0', to: 1 }, 
-            Edge { from: 0, symbol: '1', to: 2 }, 
-            Edge { from: 1, symbol: '1', to: 3 }, 
-            Edge { from: 1, symbol: '0', to: 4 }, 
-            Edge { from: 3, symbol: '1', to: 3 }, 
-            Edge { from: 3, symbol: '0', to: 0 },
-            Edge { from: 5, symbol: '0', to: 3 }, 
-            Edge { from: 5, symbol: '1', to: 4 }, 
-            Edge { from: 6, symbol: '0', to: 7 }, 
-            Edge { from: 6, symbol: '1', to: 2 }, 
-            Edge { from: 2, symbol: '0', to: 3 }, 
-            Edge { from: 2, symbol: '1', to: 4 }, 
-            Edge { from: 4, symbol: '0', to: 4 }, 
-            Edge { from: 4, symbol: '1', to: 6 }, 
-            Edge { from: 7, symbol: '0', to: 4 }, 
-            Edge { from: 7, symbol: '1', to: 3 }, 
-        ]);
+        assert_eq!(
+            result.dfa.edges,
+            vec![
+                Edge {
+                    from: 0,
+                    symbol: '0',
+                    to: 1
+                },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 2
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 3
+                },
+                Edge {
+                    from: 1,
+                    symbol: '0',
+                    to: 4
+                },
+                Edge {
+                    from: 3,
+                    symbol: '1',
+                    to: 3
+                },
+                Edge {
+                    from: 3,
+                    symbol: '0',
+                    to: 0
+                },
+                Edge {
+                    from: 5,
+                    symbol: '0',
+                    to: 3
+                },
+                Edge {
+                    from: 5,
+                    symbol: '1',
+                    to: 4
+                },
+                Edge {
+                    from: 6,
+                    symbol: '0',
+                    to: 7
+                },
+                Edge {
+                    from: 6,
+                    symbol: '1',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '0',
+                    to: 3
+                },
+                Edge {
+                    from: 2,
+                    symbol: '1',
+                    to: 4
+                },
+                Edge {
+                    from: 4,
+                    symbol: '0',
+                    to: 4
+                },
+                Edge {
+                    from: 4,
+                    symbol: '1',
+                    to: 6
+                },
+                Edge {
+                    from: 7,
+                    symbol: '0',
+                    to: 4
+                },
+                Edge {
+                    from: 7,
+                    symbol: '1',
+                    to: 3
+                },
+            ]
+        );
         assert!(determinisic)
     }
 
     #[test]
-    fn valid_dfa_parses_correctly3() { 
+    fn valid_dfa_parses_correctly3() {
         let raw = parse_dfa(DFA3).unwrap();
         let result = NamedDFA::build(raw).unwrap();
         let determinisic = result.dfa.check_determinism();
@@ -723,23 +809,54 @@ mod tests {
         assert_eq!(result.dfa.initial, 0);
         assert_eq!(result.dfa.accepting, vec![0]);
         assert_eq!(result.names, vec!["q0", "q1", "q2", "q3", "q4", "q5", "q6"]);
-        assert_eq!(result.dfa.edges, vec![
-            Edge { from: 0, symbol: '1', to: 4 }, 
-            Edge { from: 1, symbol: '1', to: 2 }, 
-            Edge { from: 2, symbol: '1', to: 0 }, 
-            Edge { from: 3, symbol: '1', to: 3 }, 
-            Edge { from: 4, symbol: '1', to: 3 }, 
-            Edge { from: 5, symbol: '1', to: 5 }, 
-            Edge { from: 6, symbol: '1', to: 3 }, 
-        ]);
+        assert_eq!(
+            result.dfa.edges,
+            vec![
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 4
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 3,
+                    symbol: '1',
+                    to: 3
+                },
+                Edge {
+                    from: 4,
+                    symbol: '1',
+                    to: 3
+                },
+                Edge {
+                    from: 5,
+                    symbol: '1',
+                    to: 5
+                },
+                Edge {
+                    from: 6,
+                    symbol: '1',
+                    to: 3
+                },
+            ]
+        );
         assert!(determinisic)
     }
 
     #[test]
     fn nfa_parsing() {
         let raw = parse_dfa(NFA1).unwrap();
-        let result = NamedDFA::build(raw).unwrap(); 
-        
+        let result = NamedDFA::build(raw).unwrap();
+
         let determinisic = result.dfa.check_determinism();
         assert!(!determinisic)
     }

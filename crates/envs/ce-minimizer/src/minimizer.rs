@@ -1,7 +1,7 @@
 use tapi::kind::Name;
 
 use super::{DFA, Edge, NamedDFA, Node};
-use std::collections::{BTreeSet, BTreeMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 #[derive(PartialEq)]
 enum Equivalence {
@@ -210,8 +210,8 @@ impl NamedDFA {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
     use super::*;
+    use std::vec;
 
     fn dfa1() -> NamedDFA {
         NamedDFA {
@@ -221,17 +221,54 @@ mod tests {
                 accepting: vec![0, 1],
                 alphabet: vec!['1', '2'],
                 edges: vec![
-                    Edge { from: 0, symbol: '2', to: 1 },
-                    Edge { from: 1, symbol: '2', to: 0 },
-                    Edge { from: 0, symbol: '1', to: 2 },
-                    Edge { from: 1, symbol: '1', to: 2 },
-                    Edge { from: 2, symbol: '1', to: 0 },
-                    Edge { from: 2, symbol: '2', to: 2 },
-                    Edge { from: 3, symbol: '1', to: 2 },
-                    Edge { from: 3, symbol: '2', to: 2 },
+                    Edge {
+                        from: 0,
+                        symbol: '2',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '2',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: '1',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '1',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '1',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '2',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 3,
+                        symbol: '1',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 3,
+                        symbol: '2',
+                        to: 2,
+                    },
                 ],
             },
-            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string(), "q3".to_string()],
+            names: vec![
+                "q0".to_string(),
+                "q1".to_string(),
+                "q2".to_string(),
+                "q3".to_string(),
+            ],
         }
     }
 
@@ -243,15 +280,51 @@ mod tests {
                 accepting: vec![2],
                 alphabet: vec!['0', '1', '3'],
                 edges: vec![
-                    Edge { from: 0, symbol: '3', to: 0 },
-                    Edge { from: 0, symbol: '0', to: 1 },
-                    Edge { from: 0, symbol: '1', to: 1 },
-                    Edge { from: 1, symbol: '1', to: 0 },
-                    Edge { from: 1, symbol: '3', to: 0 },
-                    Edge { from: 1, symbol: '0', to: 2 },
-                    Edge { from: 2, symbol: '3', to: 1 },
-                    Edge { from: 2, symbol: '0', to: 2 },
-                    Edge { from: 2, symbol: '1', to: 2 },
+                    Edge {
+                        from: 0,
+                        symbol: '3',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: '0',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: '1',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '1',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '3',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '0',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '3',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '0',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '1',
+                        to: 2,
+                    },
                 ],
             },
             names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
@@ -263,15 +336,39 @@ mod tests {
             dfa: DFA {
                 state_count: 3,
                 initial: 0,
-                accepting: vec![0, 1, 2], 
+                accepting: vec![0, 1, 2],
                 alphabet: vec!['1', '2'],
                 edges: vec![
-                    Edge { from: 0, symbol: '1', to: 1 },
-                    Edge { from: 0, symbol: '2', to: 2 },
-                    Edge { from: 1, symbol: '1', to: 0 },
-                    Edge { from: 1, symbol: '2', to: 2 },
-                    Edge { from: 2, symbol: '1', to: 0 },
-                    Edge { from: 2, symbol: '2', to: 1 },
+                    Edge {
+                        from: 0,
+                        symbol: '1',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: '2',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '1',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '2',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '1',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '2',
+                        to: 1,
+                    },
                 ],
             },
             names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
@@ -286,17 +383,54 @@ mod tests {
                 accepting: vec![1],
                 alphabet: vec!['1', '2'],
                 edges: vec![
-                    Edge { from: 0, symbol: '1', to: 1 },
-                    Edge { from: 0, symbol: '2', to: 2 }, // trap A
-                    Edge { from: 1, symbol: '1', to: 1 },
-                    Edge { from: 1, symbol: '2', to: 3 }, // trap B
-                    Edge { from: 2, symbol: '1', to: 2 },
-                    Edge { from: 2, symbol: '2', to: 2 },
-                    Edge { from: 3, symbol: '1', to: 3 },
-                    Edge { from: 3, symbol: '2', to: 3 },
+                    Edge {
+                        from: 0,
+                        symbol: '1',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: '2',
+                        to: 2,
+                    }, // trap A
+                    Edge {
+                        from: 1,
+                        symbol: '1',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: '2',
+                        to: 3,
+                    }, // trap B
+                    Edge {
+                        from: 2,
+                        symbol: '1',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: '2',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 3,
+                        symbol: '1',
+                        to: 3,
+                    },
+                    Edge {
+                        from: 3,
+                        symbol: '2',
+                        to: 3,
+                    },
                 ],
             },
-            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string(), "q3".to_string()],
+            names: vec![
+                "q0".to_string(),
+                "q1".to_string(),
+                "q2".to_string(),
+                "q3".to_string(),
+            ],
         }
     }
 
@@ -308,11 +442,31 @@ mod tests {
                 accepting: vec![2],
                 alphabet: vec!['a', 'b'],
                 edges: vec![
-                    Edge { from: 0, symbol: 'a', to: 1 },
-                    Edge { from: 0, symbol: 'b', to: 0 },
-                    Edge { from: 1, symbol: 'a', to: 2 },
-                    Edge { from: 2, symbol: 'a', to: 2 },
-                    Edge { from: 2, symbol: 'b', to: 2 },
+                    Edge {
+                        from: 0,
+                        symbol: 'a',
+                        to: 1,
+                    },
+                    Edge {
+                        from: 0,
+                        symbol: 'b',
+                        to: 0,
+                    },
+                    Edge {
+                        from: 1,
+                        symbol: 'a',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: 'a',
+                        to: 2,
+                    },
+                    Edge {
+                        from: 2,
+                        symbol: 'b',
+                        to: 2,
+                    },
                 ],
             },
             names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
@@ -322,58 +476,121 @@ mod tests {
     #[test]
     fn dfa1_test() {
         let dfa = dfa1().minimize().unwrap();
-        
+
         assert_eq!(dfa.dfa.state_count, 2);
         assert_eq!(dfa.dfa.initial, 0);
         assert_eq!(dfa.dfa.accepting, vec![0]);
-        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
-        assert_eq!(dfa.dfa.edges, 
+        assert_eq!(dfa.dfa.alphabet, vec!['1', '2']);
+        assert_eq!(
+            dfa.dfa.edges,
             vec![
-                Edge { from: 0, symbol: '2', to: 0 },
-                Edge { from: 0, symbol: '1', to: 1 },
-                Edge { from: 1, symbol: '1', to: 0 },
-                Edge { from: 1, symbol: '2', to: 1 }
+                Edge {
+                    from: 0,
+                    symbol: '2',
+                    to: 0
+                },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 1
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 1,
+                    symbol: '2',
+                    to: 1
+                }
             ]
-        );       
+        );
     }
 
     #[test]
     fn dfa2_test() {
         let dfa = dfa2_already_minimized().minimize().unwrap();
-        
+
         assert_eq!(dfa.dfa.state_count, 3);
         assert_eq!(dfa.dfa.initial, 0);
         assert_eq!(dfa.dfa.accepting, vec![2]);
-        assert_eq!(dfa.dfa.alphabet, vec!['0','1','3']);
-        assert_eq!(dfa.dfa.edges, 
+        assert_eq!(dfa.dfa.alphabet, vec!['0', '1', '3']);
+        assert_eq!(
+            dfa.dfa.edges,
             vec![
-                Edge { from: 0, symbol: '3', to: 0 },
-                Edge { from: 0, symbol: '0', to: 1 },
-                Edge { from: 0, symbol: '1', to: 1 },
-                Edge { from: 1, symbol: '1', to: 0 },
-                Edge { from: 1, symbol: '3', to: 0 },
-                Edge { from: 1, symbol: '0', to: 2 },
-                Edge { from: 2, symbol: '3', to: 1 },
-                Edge { from: 2, symbol: '0', to: 2 },
-                Edge { from: 2, symbol: '1', to: 2 },
+                Edge {
+                    from: 0,
+                    symbol: '3',
+                    to: 0
+                },
+                Edge {
+                    from: 0,
+                    symbol: '0',
+                    to: 1
+                },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 1
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 1,
+                    symbol: '3',
+                    to: 0
+                },
+                Edge {
+                    from: 1,
+                    symbol: '0',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '3',
+                    to: 1
+                },
+                Edge {
+                    from: 2,
+                    symbol: '0',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '1',
+                    to: 2
+                },
             ]
-        );       
+        );
     }
 
     #[test]
     fn dfa3_test() {
         let dfa = dfa3_all_states_equivalent().minimize().unwrap();
-        
+
         assert_eq!(dfa.dfa.state_count, 1);
         assert_eq!(dfa.dfa.initial, 0);
         assert_eq!(dfa.dfa.accepting, vec![0]);
-        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
-        assert_eq!(dfa.dfa.edges, 
+        assert_eq!(dfa.dfa.alphabet, vec!['1', '2']);
+        assert_eq!(
+            dfa.dfa.edges,
             vec![
-                Edge { from: 0, symbol: '1', to: 0 },
-                Edge { from: 0, symbol: '2', to: 0 },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 0
+                },
+                Edge {
+                    from: 0,
+                    symbol: '2',
+                    to: 0
+                },
             ]
-        );       
+        );
     }
 
     #[test]
@@ -384,17 +601,42 @@ mod tests {
         assert_eq!(dfa.dfa.state_count, 3);
         assert_eq!(dfa.dfa.initial, 0);
         assert_eq!(dfa.dfa.accepting, vec![1]);
-        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
-        assert_eq!(dfa.dfa.edges, 
+        assert_eq!(dfa.dfa.alphabet, vec!['1', '2']);
+        assert_eq!(
+            dfa.dfa.edges,
             vec![
-                Edge { from: 0, symbol: '1', to: 1 },
-                Edge { from: 0, symbol: '2', to: 2 },
-                Edge { from: 1, symbol: '1', to: 1 },
-                Edge { from: 1, symbol: '2', to: 2 },
-                Edge { from: 2, symbol: '1', to: 2 },
-                Edge { from: 2, symbol: '2', to: 2 },
+                Edge {
+                    from: 0,
+                    symbol: '1',
+                    to: 1
+                },
+                Edge {
+                    from: 0,
+                    symbol: '2',
+                    to: 2
+                },
+                Edge {
+                    from: 1,
+                    symbol: '1',
+                    to: 1
+                },
+                Edge {
+                    from: 1,
+                    symbol: '2',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '1',
+                    to: 2
+                },
+                Edge {
+                    from: 2,
+                    symbol: '2',
+                    to: 2
+                },
             ]
-        );       
+        );
     }
 
     #[test]
