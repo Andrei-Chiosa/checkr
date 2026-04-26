@@ -1,7 +1,7 @@
 use tapi::kind::Name;
 
 use super::{DFA, Edge, NamedDFA, Node};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeSet, BTreeMap, VecDeque};
 
 #[derive(PartialEq)]
 enum Equivalence {
@@ -99,7 +99,7 @@ impl NamedDFA {
 
     fn remove_unreachable_states(&mut self) {
         //Perform a BFS
-        let mut visited: HashSet<Node> = HashSet::new();
+        let mut visited: BTreeSet<Node> = BTreeSet::new();
         let mut queue: VecDeque<Node> = VecDeque::new();
 
         queue.push_back(self.dfa.initial);
@@ -122,7 +122,7 @@ impl NamedDFA {
         self.dfa.accepting.retain(|s| visited.contains(s));
 
         //remap unreachable states
-        let mut remap: HashMap<Node, Node> = HashMap::new();
+        let mut remap: BTreeMap<Node, Node> = BTreeMap::new();
         for (new_id, old_id) in visited.iter().enumerate() {
             remap.insert(*old_id, new_id);
         }
@@ -205,5 +205,201 @@ impl NamedDFA {
         } else {
             Equivalence::Equivalent
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+    use super::*;
+
+    fn dfa1() -> NamedDFA {
+        NamedDFA {
+            dfa: DFA {
+                state_count: 4,
+                initial: 0,
+                accepting: vec![0, 1],
+                alphabet: vec!['1', '2'],
+                edges: vec![
+                    Edge { from: 0, symbol: '2', to: 1 },
+                    Edge { from: 1, symbol: '2', to: 0 },
+                    Edge { from: 0, symbol: '1', to: 2 },
+                    Edge { from: 1, symbol: '1', to: 2 },
+                    Edge { from: 2, symbol: '1', to: 0 },
+                    Edge { from: 2, symbol: '2', to: 2 },
+                    Edge { from: 3, symbol: '1', to: 2 },
+                    Edge { from: 3, symbol: '2', to: 2 },
+                ],
+            },
+            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string(), "q3".to_string()],
+        }
+    }
+
+    fn dfa2_already_minimized() -> NamedDFA {
+        NamedDFA {
+            dfa: DFA {
+                state_count: 3,
+                initial: 0,
+                accepting: vec![2],
+                alphabet: vec!['0', '1', '3'],
+                edges: vec![
+                    Edge { from: 0, symbol: '3', to: 0 },
+                    Edge { from: 0, symbol: '0', to: 1 },
+                    Edge { from: 0, symbol: '1', to: 1 },
+                    Edge { from: 1, symbol: '1', to: 0 },
+                    Edge { from: 1, symbol: '3', to: 0 },
+                    Edge { from: 1, symbol: '0', to: 2 },
+                    Edge { from: 2, symbol: '3', to: 1 },
+                    Edge { from: 2, symbol: '0', to: 2 },
+                    Edge { from: 2, symbol: '1', to: 2 },
+                ],
+            },
+            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
+        }
+    }
+
+    fn dfa3_all_states_equivalent() -> NamedDFA {
+        NamedDFA {
+            dfa: DFA {
+                state_count: 3,
+                initial: 0,
+                accepting: vec![0, 1, 2], 
+                alphabet: vec!['1', '2'],
+                edges: vec![
+                    Edge { from: 0, symbol: '1', to: 1 },
+                    Edge { from: 0, symbol: '2', to: 2 },
+                    Edge { from: 1, symbol: '1', to: 0 },
+                    Edge { from: 1, symbol: '2', to: 2 },
+                    Edge { from: 2, symbol: '1', to: 0 },
+                    Edge { from: 2, symbol: '2', to: 1 },
+                ],
+            },
+            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
+        }
+    }
+
+    fn dfa4() -> NamedDFA {
+        NamedDFA {
+            dfa: DFA {
+                state_count: 4,
+                initial: 0,
+                accepting: vec![1],
+                alphabet: vec!['1', '2'],
+                edges: vec![
+                    Edge { from: 0, symbol: '1', to: 1 },
+                    Edge { from: 0, symbol: '2', to: 2 }, // trap A
+                    Edge { from: 1, symbol: '1', to: 1 },
+                    Edge { from: 1, symbol: '2', to: 3 }, // trap B
+                    Edge { from: 2, symbol: '1', to: 2 },
+                    Edge { from: 2, symbol: '2', to: 2 },
+                    Edge { from: 3, symbol: '1', to: 3 },
+                    Edge { from: 3, symbol: '2', to: 3 },
+                ],
+            },
+            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string(), "q3".to_string()],
+        }
+    }
+
+    fn dfa_incomplete() -> NamedDFA {
+        NamedDFA {
+            dfa: DFA {
+                state_count: 3,
+                initial: 0,
+                accepting: vec![2],
+                alphabet: vec!['a', 'b'],
+                edges: vec![
+                    Edge { from: 0, symbol: 'a', to: 1 },
+                    Edge { from: 0, symbol: 'b', to: 0 },
+                    Edge { from: 1, symbol: 'a', to: 2 },
+                    Edge { from: 2, symbol: 'a', to: 2 },
+                    Edge { from: 2, symbol: 'b', to: 2 },
+                ],
+            },
+            names: vec!["q0".to_string(), "q1".to_string(), "q2".to_string()],
+        }
+    }
+
+    #[test]
+    fn dfa1_test() {
+        let dfa = dfa1().minimize().unwrap();
+        
+        assert_eq!(dfa.dfa.state_count, 2);
+        assert_eq!(dfa.dfa.initial, 0);
+        assert_eq!(dfa.dfa.accepting, vec![0]);
+        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
+        assert_eq!(dfa.dfa.edges, 
+            vec![
+                Edge { from: 0, symbol: '2', to: 0 },
+                Edge { from: 0, symbol: '1', to: 1 },
+                Edge { from: 1, symbol: '1', to: 0 },
+                Edge { from: 1, symbol: '2', to: 1 }
+            ]
+        );       
+    }
+
+    #[test]
+    fn dfa2_test() {
+        let dfa = dfa2_already_minimized().minimize().unwrap();
+        
+        assert_eq!(dfa.dfa.state_count, 3);
+        assert_eq!(dfa.dfa.initial, 0);
+        assert_eq!(dfa.dfa.accepting, vec![2]);
+        assert_eq!(dfa.dfa.alphabet, vec!['0','1','3']);
+        assert_eq!(dfa.dfa.edges, 
+            vec![
+                Edge { from: 0, symbol: '3', to: 0 },
+                Edge { from: 0, symbol: '0', to: 1 },
+                Edge { from: 0, symbol: '1', to: 1 },
+                Edge { from: 1, symbol: '1', to: 0 },
+                Edge { from: 1, symbol: '3', to: 0 },
+                Edge { from: 1, symbol: '0', to: 2 },
+                Edge { from: 2, symbol: '3', to: 1 },
+                Edge { from: 2, symbol: '0', to: 2 },
+                Edge { from: 2, symbol: '1', to: 2 },
+            ]
+        );       
+    }
+
+    #[test]
+    fn dfa3_test() {
+        let dfa = dfa3_all_states_equivalent().minimize().unwrap();
+        
+        assert_eq!(dfa.dfa.state_count, 1);
+        assert_eq!(dfa.dfa.initial, 0);
+        assert_eq!(dfa.dfa.accepting, vec![0]);
+        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
+        assert_eq!(dfa.dfa.edges, 
+            vec![
+                Edge { from: 0, symbol: '1', to: 0 },
+                Edge { from: 0, symbol: '2', to: 0 },
+            ]
+        );       
+    }
+
+    #[test]
+    fn dfa4_test() {
+        let dfa = dfa4().minimize().unwrap();
+        println!("{:#?}", dfa);
+
+        assert_eq!(dfa.dfa.state_count, 3);
+        assert_eq!(dfa.dfa.initial, 0);
+        assert_eq!(dfa.dfa.accepting, vec![1]);
+        assert_eq!(dfa.dfa.alphabet, vec!['1','2']);
+        assert_eq!(dfa.dfa.edges, 
+            vec![
+                Edge { from: 0, symbol: '1', to: 1 },
+                Edge { from: 0, symbol: '2', to: 2 },
+                Edge { from: 1, symbol: '1', to: 1 },
+                Edge { from: 1, symbol: '2', to: 2 },
+                Edge { from: 2, symbol: '1', to: 2 },
+                Edge { from: 2, symbol: '2', to: 2 },
+            ]
+        );       
+    }
+
+    #[test]
+    fn dfa_incomplete_test() {
+        let result = dfa_incomplete().minimize();
+        assert!(matches!(result, Err(MinimizationError::IncompleteInput)));
     }
 }
