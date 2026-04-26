@@ -608,10 +608,12 @@ mod tests {
     const MISSING_SYMBOL_INPUT: &str = "states: q0 q1\nalphabet: 0\naccepting: q1\ninitial: q0\ntransitions:\nq0,0->q1\nq0,1->q0\nq1,1->q0\nq1,1->q1";
     const MISSING_STATE_INPUT: &str = "states: q0 \nalphabet: 0 1\naccepting: q1\ninitial: q0\ntransitions:\nq0,0->q1\nq0,1->q0\nq1,1->q0\nq1,1->q1";
 
-    const DFA1: &str = "states: q0 q1 \nalphabet: 0 1\naccepting: q1\ninitial: q0\ntransitions:\nq0,0->q1\nq0,1->q0\nq1,1->q0\nq1,1->q1";
+    const DFA1: &str = "states: q0 q1 \nalphabet: 0 1\naccepting: q1\ninitial: q0\ntransitions:\nq0,0->q1\nq0,1->q0\nq1,1->q0\nq1,0->q1";
     const DFA2: &str = "alphabet: 0 1\naccepting: C\ninitial: A\ntransitions:\nA,0->B\nA, 1->F\nB, 1 -> C\nB,0->G\nC,1->C\nC,0->A\nD,0->C\nD,1->G\nE,0->H\nE,1->F\nF,0->C\nF,1->G\nG,0->G
     \nG,1->E\nH,0->G\nH,1->C";
     const DFA3: &str = "states: q0 q1 q2 q3 q4 q5 q6\ninitial: q0\nalphabet: 1\naccepting: q0\ntransitions:\nq0, 1 -> q4\nq1, 1 -> q2\nq2, 1 -> q0\nq3, 1 -> q3\nq4, 1 -> q3\nq5, 1 -> q5\nq6, 1 -> q3";
+
+    const NFA1: &str = "states: q0 q1 q2\ninitial: q0\nalphabet: a b\naccepting: q2\ntransitions:\nq0, a -> q0\nq0, a -> q1\nq0, b -> q0\nq1, b -> q2";
 
     //parse_dfa tests
     #[test]
@@ -665,6 +667,7 @@ mod tests {
     fn valid_dfa_parses_correctly1() {
         let raw = parse_dfa(DFA1).unwrap();
         let result = NamedDFA::build(raw).unwrap();
+        let determinisic = result.dfa.check_determinism();
 
         assert_eq!(result.dfa.state_count, 2);
         assert_eq!(result.dfa.initial, 0);
@@ -674,14 +677,16 @@ mod tests {
             Edge { from: 0, symbol: '0', to: 1 }, 
             Edge { from: 0, symbol: '1', to: 0 }, 
             Edge { from: 1, symbol: '1', to: 0 }, 
-            Edge { from: 1, symbol: '1', to: 1 }, 
+            Edge { from: 1, symbol: '0', to: 1 }, 
         ]);
+        assert!(determinisic)
     }
 
     #[test]
     fn valid_dfa_parses_correctly2() { 
         let raw = parse_dfa(DFA2).unwrap();
         let result = NamedDFA::build(raw).unwrap();
+        let determinisic = result.dfa.check_determinism();
 
         assert_eq!(result.dfa.state_count, 8);
         assert_eq!(result.dfa.initial, 0);
@@ -705,12 +710,14 @@ mod tests {
             Edge { from: 7, symbol: '0', to: 4 }, 
             Edge { from: 7, symbol: '1', to: 3 }, 
         ]);
+        assert!(determinisic)
     }
 
     #[test]
     fn valid_dfa_parses_correctly3() { 
         let raw = parse_dfa(DFA3).unwrap();
         let result = NamedDFA::build(raw).unwrap();
+        let determinisic = result.dfa.check_determinism();
 
         assert_eq!(result.dfa.state_count, 7);
         assert_eq!(result.dfa.initial, 0);
@@ -725,5 +732,15 @@ mod tests {
             Edge { from: 5, symbol: '1', to: 5 }, 
             Edge { from: 6, symbol: '1', to: 3 }, 
         ]);
+        assert!(determinisic)
+    }
+
+    #[test]
+    fn nfa_parsing() {
+        let raw = parse_dfa(NFA1).unwrap();
+        let result = NamedDFA::build(raw).unwrap(); 
+        
+        let determinisic = result.dfa.check_determinism();
+        assert!(!determinisic)
     }
 }
